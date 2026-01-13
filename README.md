@@ -1,4 +1,4 @@
-# ReactNativeTest Chat
+# Expo AI Chat Demo
 
 Minimal microservice-style chat demo with a Fastify backend-for-frontend proxying to a FastAPI AI service and Postgres.
 
