@@ -1,0 +1,16 @@
+{
+  "name": "reactnativetest",
+  "private": true,
+  "scripts": {
+    "dev:app": "pnpm -C apps/app start",
+    "dev:api": "pnpm -C services/api-node dev",
+    "dev:app:web": "pnpm -C apps/app start -- --web",
+    "dev:ai": "cmd /c \"cd /d %CD%\\services\\ai-python && .venv\\Scripts\\python.exe -m uvicorn main:app --reload --port 8000\"",
+    "dev:all": "concurrently -n api,app \"pnpm -C services/api-node dev\" \"pnpm -C apps/app start\"",
+    "dev:all:web": "concurrently -n api,ai,app,web \"pnpm -C services/api-node dev\" \"cmd /c \\\"cd /d %CD%\\\\services\\\\ai-python && .venv\\\\Scripts\\\\python.exe -m uvicorn main:app --reload --port 8000\\\"\" \"pnpm -C apps/app start -- --web\" \"powershell -NoProfile -Command \\\"Start-Sleep -Seconds 6; Start-Process http://localhost:19006\\\"\"",
+    "install:all": "pnpm -C apps/app install && pnpm -C services/api-node install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
