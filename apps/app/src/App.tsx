@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -23,8 +23,6 @@ export default function App() {
   const [error, setError] = useState("");
   const listRef = useRef<FlatList<ChatMessage> | null>(null);
 
-  const sortedMessages = useMemo(() => messages, [messages]);
-
   const updateAssistantMessage = useCallback((id: string, nextContent: string) => {
     setMessages((prev) =>
       prev.map((message) =>
@@ -46,12 +44,13 @@ export default function App() {
     setError("");
     setPrompt("");
 
+    const now = Date.now();
     const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
+      id: `user-${now}`,
       role: "user",
       content: trimmedPrompt
     };
-    const assistantId = `assistant-${Date.now() + 1}`;
+    const assistantId = `assistant-${now + 1}`;
     const assistantMessage: ChatMessage = {
       id: assistantId,
       role: "assistant",
@@ -59,12 +58,14 @@ export default function App() {
     };
     setMessages((prev) => [...prev, userMessage, assistantMessage]);
 
+    const requestInit = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: trimmedEmail, prompt: trimmedPrompt })
+    };
+
     try {
-      const response = await fetch(`${API_BASE_URL}/api/ask/stream`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: trimmedEmail, prompt: trimmedPrompt })
-      });
+      const response = await fetch(`${API_BASE_URL}/api/ask/stream`, requestInit);
 
       if (!response.ok) {
         throw new Error("Request failed");
@@ -89,11 +90,7 @@ export default function App() {
       }
     } catch (err) {
       try {
-        const fallback = await fetch(`${API_BASE_URL}/api/ask`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: trimmedEmail, prompt: trimmedPrompt })
-        });
+        const fallback = await fetch(`${API_BASE_URL}/api/ask`, requestInit);
 
         if (!fallback.ok) {
           throw new Error("Fallback request failed");
@@ -142,7 +139,7 @@ export default function App() {
 
         <FlatList
           ref={listRef}
-          data={sortedMessages}
+          data={messages}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.chatList}
           ItemSeparatorComponent={() => <View style={styles.messageSpacer} />}

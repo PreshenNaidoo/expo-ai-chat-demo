@@ -1,8 +1,6 @@
 # Expo AI Chat Demo
 
-Minimal microservice-style chat demo with a Fastify backend-for-frontend proxying to a FastAPI AI service and Postgres.
-
-Minimal end-to-end chat demo built with Expo, Fastify, and FastAPI.
+Minimal end-to-end chat UI with a single Expo codebase for web, Android, and iOS, backed by a Fastify backend-for-frontend proxying to a FastAPI AI service and Postgres.
 
 ## Overview
 - Expo TypeScript app (`apps/app`) sends `{ email, prompt }` to the Fastify API.

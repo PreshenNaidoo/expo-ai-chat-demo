@@ -11,6 +11,8 @@ from pydantic import BaseModel, Field
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
+MODEL = os.getenv("OPENAI_MODEL", "gpt-5")
+SYSTEM_PROMPT = "You are a helpful assistant."
 
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL is required for the AI service")
@@ -28,6 +30,20 @@ class InferPayload(BaseModel):
     prompt: str = Field(..., min_length=1)
 
 
+def get_prompt(payload: InferPayload) -> str:
+    prompt_text = payload.prompt.strip()
+    if not prompt_text:
+        raise HTTPException(status_code=400, detail="Prompt is required")
+    return prompt_text
+
+
+def build_messages(prompt_text: str):
+    return [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": prompt_text}
+    ]
+
+
 @app.get("/health")
 async def health():
     return {"ok": True}
@@ -35,22 +51,16 @@ async def health():
 
 @app.post("/infer")
 async def infer(payload: InferPayload):
-    prompt_text = payload.prompt.strip()
-    if not prompt_text:
-        raise HTTPException(status_code=400, detail="Prompt is required")
+    prompt_text = get_prompt(payload)
 
     try:
         completion = client.chat.completions.create(
-            model=os.getenv("OPENAI_MODEL", "gpt-5"),
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": prompt_text}
-            ]
+            model=MODEL,
+            messages=build_messages(prompt_text)
         )
     except Exception:
         raise HTTPException(status_code=502, detail="AI service unavailable")
 
-    answer = ""
     try:
         answer = completion.choices[0].message.content or ""
     except Exception:
@@ -70,17 +80,12 @@ async def infer(payload: InferPayload):
 
 @app.post("/infer/stream")
 async def infer_stream(payload: InferPayload):
-    prompt_text = payload.prompt.strip()
-    if not prompt_text:
-        raise HTTPException(status_code=400, detail="Prompt is required")
+    prompt_text = get_prompt(payload)
 
     try:
         stream = client.chat.completions.create(
-            model=os.getenv("OPENAI_MODEL", "gpt-5"),
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": prompt_text}
-            ],
+            model=MODEL,
+            messages=build_messages(prompt_text),
             stream=True
         )
     except Exception:
